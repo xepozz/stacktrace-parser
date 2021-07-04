@@ -13,7 +13,7 @@ class StackTraceParserTest extends TestCase
     /**
      * @dataProvider stacktraceDataProvider()
      */
-    public function testParse(string $stacktrace, array $expectedResult)
+    public function testParse(string $stacktrace, array $expectedResult): void
     {
         $result = $this->parse($stacktrace);
         $expectedResult = $this->cleanTrace($expectedResult);
@@ -27,7 +27,7 @@ class StackTraceParserTest extends TestCase
         return $parser->parse($stacktrace);
     }
 
-    public function stacktraceDataProvider()
+    public function stacktraceDataProvider(): array
     {
         $exception1 = new Exception();
         return [
