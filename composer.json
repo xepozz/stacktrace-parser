@@ -17,9 +17,6 @@
             "email": "xepozz@list.ru"
         }
     ],
-    "require": {
-        "phplrt/phplrt": "^3.1"
-    },
     "require-dev": {
         "phpunit/phpunit": "^9.5"
     }

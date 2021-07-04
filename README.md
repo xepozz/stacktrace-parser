@@ -14,11 +14,7 @@ composer req xepozz/stacktrace-parser --prefer-dist
 ## Usage
 
 ```php
-
-use Phplrt\Compiler\Compiler;
-use Xepozz\StacktraceParser\StacktraceParser;
-
-$parser = new StackTraceParser(new Compiler());
+use Xepozz\StacktraceParser\StacktraceParser;$parser = new StacktraceParser();
 
 $stacktrace = $parser->parse(<<<TEXT
 Fatal error: Uncaught Exception in /in/hVvRE:5

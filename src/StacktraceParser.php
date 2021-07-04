@@ -3,140 +3,86 @@ declare(strict_types=1);
 
 namespace Xepozz\StacktraceParser;
 
-use Phplrt\Compiler\Compiler;
-use Phplrt\Compiler\SampleNode;
-use Phplrt\Contracts\Exception\RuntimeExceptionInterface;
-use Phplrt\Contracts\Lexer\TokenInterface;
-use Throwable;
+use RuntimeException;
 
 class StacktraceParser
 {
-    private Compiler $compiler;
-
-    public function __construct(Compiler $compiler)
-    {
-        $this->compiler = $compiler;
-    }
-
-    /**
-     * @param string $source
-     * @return iterable
-     * @throws RuntimeExceptionInterface
-     * @throws Throwable
-     */
     public function parse(string $source): iterable
     {
-        $ast = $this->parseByPP2($source);
-
-        return $this->parseAstToArray($ast);
+        return $this->parseRegexp($source);
     }
 
-    /**
-     * @param SampleNode $ast
-     * @return iterable
-     */
-    private function parseAstToArray(SampleNode $ast): iterable
+    private function parseRegexp(string $source): iterable
     {
-        $resultTrace = [];
-        /** @var SampleNode|TokenInterface $item */
-        foreach ($ast->children as $i => $child) {
-            switch ($child->getState()) {
-                case 'TraceLine':
-                    $iterator = $child->getIterator();
-                    foreach ($iterator as $value) {
-                        if (is_iterable($value)) {
-                            $resultTrace[$i] = [];
-                            $this->iterate($child, $value, $resultTrace[$i]);
-                        }
-                    }
-            }
-        }
-        return $resultTrace;
+        $pattern = <<<REGEXP
+        /
+        (?:\#\d\s{main}[^$]*)
+        |
+        (?:
+            (?:
+                \#\d+\s+
+                (
+                    (?:\[internal\sfunction\])
+                    |
+                    (?<FILE>.+?)
+                    \(
+                        (?<LINE>\d+)
+                    \)
+                )
+                :\s+
+                (?:
+                    (?<CLASS>[\w\\\]+)
+                    (?<TYPE>::|->)
+                )?
+                (?<FUNCTION>[\w_]+)
+                \(.*?\)\n
+            )
+        )
+        /x
+        REGEXP;
+
+
+        $matches = [];
+
+        $matches = $this->runRegexp($pattern, $source, $matches);
+        $matches = $this->filterMatches($matches);
+
+        return $this->mapResult($matches);
     }
 
-    /**
-     * @param string $source
-     * @return SampleNode
-     * @throws RuntimeExceptionInterface
-     * @throws Throwable
-     */
-    private function parseByPP2(string $source): iterable
+    protected function filterMatches($matches): array
     {
-        $this->compiler->load(<<<EBNF
-        %token  T_NUMBER                    \d+
-        %token  T_COLON                     :
-        %token  T_BRACKET_OPEN              \(
-        %token  T_BRACKET_CLOSE             \)
-        %token  T_LINE_NUMBER               \#\d+
-        %skip   T_WHITESPACE                \s+
-        %skip   T_THROWN_IN                 thrown\sin\s.+?\son\sline\s\d+
-        %skip   T_EXCEPTION_MESSAGE         .+?:.+in\s.+?:\d+
-        %skip   T_STACKTRACE                Stack\strace:
-        %skip   T_CALL_STACK                Call\sStack:.*$
-        %skip   T_CALL_STACK_COUNTERS       (?:\s+(?:\d+(?:\.\d+)?))+
-        %token  T_INTERNAL_FUNCTION         \[internal\sfunction\]
-
-        %token  T_FILE_PATH                 /.+?(?=\(\d+\):)
-        %token  T_MAIN_FUNCTIONAL           \{.+?\}
-        %token  T_CLASS_AND_FUNCTION_CALL   (?:(?<T_CLASS>[\w\\\]+?)(?<T_FUNCTION_CALL_TYPE>\-\>|::))?(?<T_FUNCTION>[\w_]+?)\(.*?\)$
-
-        #Expression
-          : TheStacktraceLine()? TraceLine()* MainTraceLine() ThrownInLine()?
-          ;
-        
-        #TraceLine
-          : ::T_LINE_NUMBER:: (FilePathAndLine() | ::T_INTERNAL_FUNCTION::)::T_COLON::<T_CLASS_AND_FUNCTION_CALL>
-          ;
-        #MainTraceLine
-          : ::T_LINE_NUMBER:: ::T_MAIN_FUNCTIONAL::
-          ;
-        #TheStacktraceLine
-          : ::T_STACKTRACE:: 
-          ;
-        #ThrownInLine
-          : <T_THROWN_IN> 
-          ;
-        #FilePathAndLine
-          : <T_FILE_PATH>::T_BRACKET_OPEN::<T_NUMBER>::T_BRACKET_CLOSE::
-          ;
-        EBNF
+        return array_filter(
+            $matches,
+            static fn(array $match) => $match['FUNCTION'] !== null || $match['LINE'] !== null
         );
-
-        return $this->compiler->parse($source);
     }
 
-    private function iterate($parent, iterable $iterable, array &$carry): void
+    protected function mapResult(array $matches): array
     {
-        foreach ($iterable as $value) {
-            if (is_iterable($value)) {
-                $this->iterate($iterable, $value, $carry);
+        return array_map(static function ($match) {
+            $result = [
+                'class' => (string)$match['CLASS'],
+                'type' => $match['TYPE'],
+                'function' => $match['FUNCTION'],
+            ];
+            if ($match['FILE'] !== null) {
+                $result['file'] = $match['FILE'];
             }
-            if (!$value instanceof TokenInterface) {
-                continue;
+            if ($match['LINE'] !== null) {
+                $result['line'] = (int)$match['LINE'];
             }
-            switch ($value->getName()) {
-                case 'T_INTERNAL_FUNCTION':
-                case 'T_FILE_PATH':
-                    $carry['file'] = $value->getValue();
-                    break;
-                case 'T_CLASS':
-                    $carry['class'] = $value->getValue();
-                    break;
-                case 'T_FUNCTION_CALL_TYPE':
-                    $carry['type'] = $value->getValue();
-                    break;
-                case 'T_FUNCTION':
-                    $carry['function'] = $value->getValue();
-                    break;
-                case 'T_NUMBER':
-                    if ($parent instanceof SampleNode) {
-                        if ($parent->getState() === 'FilePathAndLine') {
-                            $carry['line'] = (int)$value->getValue();
-                        }
-                    }
-                    break;
-            }
-        }
+            return $result;
+        }, $matches);
     }
 
+    protected function runRegexp(string $pattern, string $source, array &$matches): array
+    {
+        if (!preg_match_all($pattern, $source, $matches, PREG_SET_ORDER | PREG_UNMATCHED_AS_NULL)) {
+            throw new RuntimeException(
+                'Parse error'
+            );
+        }
+        return $matches;
+    }
 }
