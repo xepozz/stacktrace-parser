@@ -70,9 +70,9 @@ class StacktraceParser
         %token  T_LINE_NUMBER               \#\d+
         %skip   T_WHITESPACE                \s+
         %skip   T_EXCEPTION_MESSAGE         .+?:.+in\s.+?:\d+$
+        %skip  T_STACKTRACE                Stack\strace:$
+        %skip  T_THROWN_IN                 thrown\sin\s.+?\son\sline\s\d+$
 
-        %token  T_STACKTRACE                Stack\strace:$
-        %token  T_THROWN_IN                 thrown\sin\s.+?\son\sline\s\d+$
         %token  T_INTERNAL_FUNCTION         \[internal\sfunction\]
         %token  T_FILE_PATH                 /.+?(?=\(\d+\):)
         %token  T_MAIN_FUNCTIONAL           \{.+?\}
