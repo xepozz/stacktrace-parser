@@ -69,11 +69,13 @@ class StacktraceParser
         %token  T_BRACKET_CLOSE             \)
         %token  T_LINE_NUMBER               \#\d+
         %skip   T_WHITESPACE                \s+
-        %skip   T_EXCEPTION_MESSAGE         .+?:.+in\s.+?:\d+$
-        %skip  T_STACKTRACE                Stack\strace:$
-        %skip  T_THROWN_IN                 thrown\sin\s.+?\son\sline\s\d+$
-
+        %skip   T_THROWN_IN                 thrown\sin\s.+?\son\sline\s\d+
+        %skip   T_EXCEPTION_MESSAGE         .+?:.+in\s.+?:\d+
+        %skip   T_STACKTRACE                Stack\strace:
+        %skip   T_CALL_STACK                Call\sStack:.*$
+        %skip   T_CALL_STACK_COUNTERS       (?:\s+(?:\d+(?:\.\d+)?))+
         %token  T_INTERNAL_FUNCTION         \[internal\sfunction\]
+
         %token  T_FILE_PATH                 /.+?(?=\(\d+\):)
         %token  T_MAIN_FUNCTIONAL           \{.+?\}
         %token  T_CLASS_AND_FUNCTION_CALL   (?:(?<T_CLASS>[\w\\\]+?)(?<T_FUNCTION_CALL_TYPE>\-\>|::))?(?<T_FUNCTION>[\w_]+?)\(.*?\)$
@@ -83,10 +85,10 @@ class StacktraceParser
           ;
         
         #TraceLine
-          : ::T_LINE_NUMBER:: (FilePathAndLine() | ::T_INTERNAL_FUNCTION::)::T_COLON::<T_CLASS_AND_FUNCTION_CALL>?
+          : ::T_LINE_NUMBER:: (FilePathAndLine() | ::T_INTERNAL_FUNCTION::)::T_COLON::<T_CLASS_AND_FUNCTION_CALL>
           ;
         #MainTraceLine
-          : ::T_LINE_NUMBER:: <T_MAIN_FUNCTIONAL>
+          : ::T_LINE_NUMBER:: ::T_MAIN_FUNCTIONAL::
           ;
         #TheStacktraceLine
           : ::T_STACKTRACE:: 

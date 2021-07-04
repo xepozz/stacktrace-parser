@@ -29,12 +29,7 @@ class StackTraceParserTest extends TestCase
 
     public function stacktraceDataProvider(): array
     {
-        $exception1 = new Exception();
         return [
-            'Complex stacktrace' => [
-                $exception1->getTraceAsString(),
-                $exception1->getTrace(),
-            ],
             'Usual stacktrace' => [
                 <<<TEXT
                 Stack trace:
@@ -52,6 +47,28 @@ class StackTraceParserTest extends TestCase
                         'function' => '__g',
                     ],
                 ],
+            ],
+            'Ignore exception message' => [
+                <<<TEXT
+                Fatal error: Uncaught Exception in /in/hVvRE:5
+                Stack trace:
+                #0 /in/hVvRE(11): A->__g()
+                #1 {main}
+                  thrown in /in/hVvRE on line 5
+                TEXT,
+                [
+                    [
+                        'file' => '/in/hVvRE',
+                        'line' => 11,
+                        'class' => 'A',
+                        'type' => '->',
+                        'function' => '__g',
+                    ],
+                ],
+            ],
+            'Complex stacktrace' => [
+                ($exception1 = new Exception())->getTraceAsString(),
+                $exception1->getTrace(),
             ],
             'Stacktrace with previous one' => [
                 <<<TEXT
@@ -73,6 +90,18 @@ class StackTraceParserTest extends TestCase
                 #1 /in/hVvRE(34): function_two()
                 #2 {main}
                TEXT
+                /**
+                 * Need to append test with
+                 *
+                 * Next RuntimeException: child in /in/hVvRE on line 29
+                 *
+                 * RuntimeException: child in /in/hVvRE on line 29
+                 *
+                 * Call Stack:
+                 * 0.0007     393304   1. {main}() /in/hVvRE:0
+                 *
+                 * and make it worked
+                 */
                 ,
                 [
                     [
@@ -88,24 +117,6 @@ class StackTraceParserTest extends TestCase
                         'class' => '',
                         'type' => '',
                         'function' => 'function_two',
-                    ],
-                ],
-            ],
-            'Ignore exception message' => [
-                <<<TEXT
-                Fatal error: Uncaught Exception in /in/hVvRE:5
-                Stack trace:
-                #0 /in/hVvRE(11): A->__g()
-                #1 {main}
-                  thrown in /in/hVvRE on line 5
-                TEXT,
-                [
-                    [
-                        'file' => '/in/hVvRE',
-                        'line' => 11,
-                        'class' => 'A',
-                        'type' => '->',
-                        'function' => '__g',
                     ],
                 ],
             ],
