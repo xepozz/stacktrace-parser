@@ -22,10 +22,10 @@ $parser = new StackTraceParser(new Compiler());
 
 $stacktrace = $parser->parse(<<<TEXT
 Fatal error: Uncaught Exception in /in/hVvRE:5
-                Stack trace:
-                #0 /in/hVvRE(11): A->__g()
-                #1 {main}
-                  thrown in /in/hVvRE on line 5
+Stack trace:
+#0 /in/hVvRE(11): A->__g()
+#1 {main}
+  thrown in /in/hVvRE on line 5
 TEXT
 );
 
