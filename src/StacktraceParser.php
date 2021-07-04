@@ -76,7 +76,7 @@ class StacktraceParser
         %token  T_INTERNAL_FUNCTION         \[internal\sfunction\]
         %token  T_FILE_PATH                 /.+?(?=\(\d+\):)
         %token  T_MAIN_FUNCTIONAL           \{.+?\}
-        %token  T_CLASS_AND_FUNCTION_CALL   (?<T_CLASS>[\w\\\]+?)(?<T_FUNCTION_CALL_TYPE>\-\>|::)(?<T_FUNCTION>[\w_]+?)\(.*?\)$
+        %token  T_CLASS_AND_FUNCTION_CALL   (?:(?<T_CLASS>[\w\\\]+?)(?<T_FUNCTION_CALL_TYPE>\-\>|::))?(?<T_FUNCTION>[\w_]+?)\(.*?\)$
 
         #Expression
           : TheStacktraceLine()? TraceLine()* MainTraceLine() ThrownInLine()?
