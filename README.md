@@ -1,7 +1,6 @@
 [![Latest Stable Version](https://poser.pugx.org/xepozz/stacktrace-parser/v/stable.png)](https://packagist.org/packages/xepozz/stacktrace-parser)
 [![Total Downloads](https://poser.pugx.org/xepozz/stacktrace-parser/downloads.png)](https://packagist.org/packages/xepozz/stacktrace-parser)
 [![Build status](https://github.com/xepozz/stacktrace-parser/workflows/build/badge.svg)](https://github.com/xepozz/stacktrace-parser/actions?query=workflow%3Abuild)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/xepozz/stacktrace-parser/badges/quality-score.png?b=main)](https://scrutinizer-ci.com/g/xepozz/stacktrace-parser/?branch=main)
 [![Code Coverage](https://scrutinizer-ci.com/g/xepozz/stacktrace-parser/badges/coverage.png?b=main)](https://scrutinizer-ci.com/g/xepozz/stacktrace-parser/?branch=main)
 
 # Introduction
